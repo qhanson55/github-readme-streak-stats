@@ -8,10 +8,17 @@ interface GraphQLError {
   path?: string[];
 }
 
-interface GraphQLResponse {
-  data?: {
+interface GraphQLYearData {
+  user?: {
+    createdAt: string;
+    contributionsCollection: {
+      contributionYears: number[];
+    };
+  };
+}
+
+interface GraphQLCalendarData {
     user?: {
-      createdAt: string;
       contributionsCollection: {
         contributionCalendar: {
           totalContributions: number;
@@ -24,8 +31,41 @@ interface GraphQLResponse {
         };
       };
     };
-  };
+}
+
+interface GraphQLResponse<T> {
+  data?: T;
   errors?: GraphQLError[];
+}
+
+/**
+ * Fetch GitHub streak data for a user
+ */
+async function fetchGraphQL<T>(token: string, query: string, variables: any): Promise<T> {
+  const response = await fetch(GITHUB_GRAPHQL_API, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub API failed: ${response.status} ${response.statusText}`);
+  }
+
+  const json = (await response.json()) as GraphQLResponse<T>;
+  
+  if (json.errors) {
+    throw new Error(`GitHub GraphQL errors: ${JSON.stringify(json.errors)}`);
+  }
+
+  if (!json.data) {
+    throw new Error("No data returned from GitHub API");
+  }
+
+  return json.data;
 }
 
 /**
@@ -36,11 +76,32 @@ export async function fetchGitHubData(
   token: string,
   useWeeks: boolean
 ): Promise<StreakCardData> {
-  const query = `
+  const yearQuery = `
     query($login: String!) {
       user(login: $login) {
         createdAt
         contributionsCollection {
+          contributionYears
+        }
+      }
+    }
+  `;
+
+  const yearData = await fetchGraphQL<GraphQLYearData>(token, yearQuery, { login: username });
+  
+  const user = yearData?.user;
+  if (!user) {
+    throw new Error(`User ${username} not found`);
+  }
+
+  const contributionYears: number[] = user.contributionsCollection.contributionYears;
+  const createdAt: string = user.createdAt;
+
+
+  const calendarQuery = `
+    query($login: String!, $from: DateTime!, $to: DateTime!) {
+      user(login: $login) {
+        contributionsCollection(from: $from, to: $to) {
           contributionCalendar {
             totalContributions
             weeks {
@@ -55,41 +116,52 @@ export async function fetchGitHubData(
     }
   `;
 
-  const response = await fetch(GITHUB_GRAPHQL_API, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      query,
-      variables: { login: username },
-    }),
-  });
+  // Create an array yearly calendar results
+  const yearlyResults = await Promise.all(contributionYears.map((year) => {
+    const from = `${year}-01-01T00:00:00Z`;
+    const to = `${year}-12-31T23:59:59Z`;
+    return fetchGraphQL<GraphQLCalendarData>(token, calendarQuery, { login: username, from, to });
+  }));
 
-  if (!response.ok) {
-    throw new Error(
-      `GitHub API failed: ${response.status} ${response.statusText}`,
-    );
+  // Create boundries
+  const todayDate = new Date();
+  const currentYear = todayDate.getUTCFullYear();
+  const today = todayDate.toISOString().split('T')[0]!;
+  
+  const tomorrowDate = new Date(todayDate);
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrow = tomorrowDate.toISOString().split('T')[0]!
+
+  // Aggregate all day contributions from all year results
+  let days: { contributionCount: number; date: string }[] = [];
+  let totalContributions = 0;
+
+  for (const [i, year] of yearlyResults.entries()) {
+    if (!year.user) {
+      throw new Error(`User ${username} not found`);
+    }
+
+    const yearNum = contributionYears[i];
+    const calendar = year.user.contributionsCollection.contributionCalendar;
+    totalContributions += calendar.totalContributions;
+    
+    let daysInYear = calendar.weeks.flatMap((w: any) => w.contributionDays);
+
+    // Filter out future dates
+    if (yearNum === currentYear) {
+      daysInYear = daysInYear.filter((day) => {
+        return day.date <= today || (day.date === tomorrow && day.contributionCount > 0);
+      });
+    }
+
+    days.push(...daysInYear);
   }
 
-  const json = (await response.json()) as GraphQLResponse;
-
-  if (json.errors) {
-    throw new Error(`GitHub GraphQL errors: ${JSON.stringify(json.errors)}`);
-  }
-
-  const user = json.data?.user;
-  if (!user) {
-    throw new Error(`User ${username} not found`);
-  }
+  // Sort days by date
+  days.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   // Process Contributions & Streaks
-  const calendar = user.contributionsCollection.contributionCalendar;
-  const days = calendar.weeks.flatMap((w) => w.contributionDays);
-
-  const fallbackDate = days[days.length - 1]?.date || new Date().toISOString();
-  const today = new Date().toISOString().split('T')[0]!;
+  const fallbackDate = days[days.length - 1]?.date || today;
 
   // Calculate streaks
   let currentStreak = 0;
@@ -109,12 +181,9 @@ export async function fetchGitHubData(
       streakEndDate: new Date().toISOString(),
       longestStreakStartDate: new Date().toISOString(),
       longestStreakEndDate: new Date().toISOString(),
-      firstContributionDate: user.createdAt,
+      firstContributionDate: createdAt,
     };
   }
-
-  // Sort days by date
-  days.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   if (useWeeks) {
     // Gets previous sunday as a way to track weeks for each day.
@@ -181,7 +250,7 @@ export async function fetchGitHubData(
     // Calculate longest streak with dates
     let tempStreak = 0;
     let tempStreakStart = "";
-    for (const day of days) {
+    for (const [index, day] of days.entries()) {
       if (day.contributionCount > 0) {
         if (tempStreak === 0) {
           tempStreakStart = day.date;
@@ -191,7 +260,7 @@ export async function fetchGitHubData(
         if (tempStreak > longestStreak) {
           longestStreak = tempStreak;
           longestStreakStart = tempStreakStart;
-          longestStreakEnd = days[days.indexOf(day) - 1]?.date || tempStreakStart;
+          longestStreakEnd = days[index - 1]?.date || tempStreakStart;
         }
         tempStreak = 0;
         tempStreakStart = "";
@@ -207,13 +276,13 @@ export async function fetchGitHubData(
 
   return {
     username,
-    totalContributions: calendar.totalContributions,
+    totalContributions,
     currentStreak,
     longestStreak,
     streakStartDate: currentStreakStart || fallbackDate,
     streakEndDate: currentStreakEnd || fallbackDate,
     longestStreakStartDate: longestStreakStart || fallbackDate,
     longestStreakEndDate: longestStreakEnd || fallbackDate,
-    firstContributionDate: user.createdAt,
+    firstContributionDate: createdAt,
   };
 }

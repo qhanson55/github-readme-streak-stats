@@ -127,6 +127,7 @@ export function generateProfileCard(
     theme = "default",
     hideBorder = false,
     animate = true,
+    weekStreak = false,
     width = 495,
     height = 195,
     borderRadius = 4.5,
@@ -171,6 +172,7 @@ export function generateProfileCard(
     locale,
     numberFormat,
     animate,
+    weekStreak,
     strokeType,
   });
 
@@ -183,6 +185,7 @@ interface ContentOptions {
   locale: string;
   numberFormat: "short" | "full";
   animate: boolean;
+  weekStreak: boolean;
   strokeType: "round" | "butt";
 }
 
@@ -196,7 +199,7 @@ function generateStreakContent(
 ): string {
   const { colors, dimensions } = ctx;
   const { width, height } = dimensions;
-  const { dateFormat, locale, numberFormat, animate, strokeType } = options;
+  const { dateFormat, locale, numberFormat, animate, strokeType, weekStreak } = options;
 
   // Get translations
   const translations = getTranslations(locale);

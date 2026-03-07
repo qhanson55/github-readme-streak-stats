@@ -19,6 +19,10 @@ inputs:
     description: "Enable animations"
     required: false
     default: "true"
+  WEEK_STREAK:
+    description: "Use week streak instead of day streak"
+    required: false
+    default: "false"
   LOCALE:
     description: "Locale for translations (e.g., en, ja, ko, zh_Hans)"
     required: false
@@ -99,6 +103,7 @@ runs:
         INPUT_THEME: ${{ inputs.THEME }}
         INPUT_OUTPUT_PATH: ${{ github.workspace }}/${{ inputs.OUTPUT_PATH }}
         INPUT_ANIMATED: ${{ inputs.ANIMATED }}
+        INPUT_WEEK_STREAK: ${{ inputs.WEEK_STREAK }}
         INPUT_LOCALE: ${{ inputs.LOCALE }}
         INPUT_DATE_FORMAT: ${{ inputs.DATE_FORMAT }}
         INPUT_BORDER_RADIUS: ${{ inputs.BORDER_RADIUS }}

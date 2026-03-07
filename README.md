@@ -107,19 +107,20 @@ A demo workflow is available in [workflow-demo.yml](workflow-demo.yml) that show
 
 ## Inputs
 
-| Input           | Description                             | Required | Default             |
-| --------------- | --------------------------------------- | -------- | ------------------- |
-| `USERNAME`      | Your GitHub username                    | **Yes**  | N/A                 |
-| `GITHUB_TOKEN`  | Your GitHub token (PAT or GITHUB_TOKEN) | **Yes**  | N/A                 |
-| `THEME`         | Theme name (e.g., `default`, `dracula`) | No       | `default`           |
-| `OUTPUT_PATH`   | Path to save the SVG file               | No       | `github-streak.svg` |
-| `ANIMATED`      | Enable animations (`true` or `false`)   | No       | `true`              |
-| `LOCALE`        | Locale code (e.g., `en`, `ja`)          | No       | `en`                |
-| `DATE_FORMAT`   | Date format string                      | No       | `M j[, Y]`          |
-| `HIDE_BORDER`   | Hide the border (`true` or `false`)     | No       | `false`             |
-| `BORDER_RADIUS` | Corner radius                           | No       | `4.5`               |
-| `CARD_WIDTH`    | Card width                              | No       | `495`               |
-| `CARD_HEIGHT`   | Card height                             | No       | `195`               |
+| Input           | Description                                          | Required | Default             |
+| --------------- | ---------------------------------------------------- | -------- | ------------------- |
+| `USERNAME`      | Your GitHub username                                 | **Yes**  | N/A                 |
+| `GITHUB_TOKEN`  | Your GitHub token (PAT or GITHUB_TOKEN)              | **Yes**  | N/A                 |
+| `THEME`         | Theme name (e.g., `default`, `dracula`)              | No       | `default`           |
+| `OUTPUT_PATH`   | Path to save the SVG file                            | No       | `github-streak.svg` |
+| `ANIMATED`      | Enable animations (`true` or `false`)                | No       | `true`              |
+| `WEEK_STREAK`   | Count streak in weeks not days (`true` or `false`)   | No       | `false`             |
+| `LOCALE`        | Locale code (e.g., `en`, `ja`)                       | No       | `en`                |
+| `DATE_FORMAT`   | Date format string                                   | No       | `M j[, Y]`          |
+| `HIDE_BORDER`   | Hide the border (`true` or `false`)                  | No       | `false`             |
+| `BORDER_RADIUS` | Corner radius                                        | No       | `4.5`               |
+| `CARD_WIDTH`    | Card width                                           | No       | `495`               |
+| `CARD_HEIGHT`   | Card height                                          | No       | `195`               |
 
 ### Custom Color Overrides
 

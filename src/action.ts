@@ -24,6 +24,7 @@ async function run() {
     const strokeType = (process.env.INPUT_STROKE_TYPE || "round") as
       | "round"
       | "butt";
+    const weekStreak = process.env.INPUT_WEEK_STREAK === "true";
 
     // Color overrides
     const fire = process.env.INPUT_FIRE;
@@ -42,6 +43,7 @@ async function run() {
 
     console.log(`🚀 Generating Streak Card for ${username}...`);
     console.log(`   Theme: ${theme}`);
+    console.log(`   Mode: ${weekStreak ? "Weekly" : "Daily"}`);
     console.log(`   Locale: ${locale}`);
     console.log(`   Output: ${outputPath}`);
 
@@ -49,8 +51,9 @@ async function run() {
     console.log("📡 Fetching GitHub data...");
     const data = await fetchGitHubData(username, token);
     console.log(`   Total Contributions: ${data.totalContributions}`);
-    console.log(`   Current Streak: ${data.currentStreak} days`);
-    console.log(`   Longest Streak: ${data.longestStreak} days`);
+    const unit = weekStreak ? "weeks" : "days";
+    console.log(`   Current Streak: ${data.currentStreak} ${unit}`);
+    console.log(`   Longest Streak: ${data.longestStreak} ${unit}`);
 
     // Generate Card
     console.log("🎨 Generating SVG...");
@@ -65,6 +68,7 @@ async function run() {
       dateFormat,
       numberFormat,
       strokeType,
+      weekStreak,
       // Color overrides (only if provided)
       ...(fire && { fire }),
       ...(ring && { ring }),

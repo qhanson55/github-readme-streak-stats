@@ -123,3 +123,42 @@ describe("Card Generator", () => {
     expect(svg).toBeTruthy();
   });
 });
+
+describe("Weekly Streak Mode", () => {
+  test("uses weekly labels and correct values from currentStreak", () => {
+    const data: StreakCardData = {
+      ...MOCK_DATA,
+      currentStreak: 5, // This is the '5 weeks' calculated by your API
+      longestStreak: 12,
+    };
+
+    const options: CardOptions = {
+      weekStreak: true, // This triggers the label change
+      locale: "en",
+    };
+
+    const svg = generateProfileCard(data, options);
+
+    // Verify values (Shared variables)
+    expect(svg).toContain(">5</text>");
+    expect(svg).toContain(">12</text>");
+
+    // Verify labels (Controlled by the option flag)
+    expect(svg).toContain("Week Streak");
+    expect(svg).toContain("Longest Week Streak");
+    expect(svg).not.toContain("Current Streak");
+  });
+
+  test("respects different locales for weekly labels", () => {
+    const options: CardOptions = {
+      weekStreak: true,
+      locale: "ja",
+    };
+
+    const svg = generateProfileCard(MOCK_DATA, options);
+
+    // Verify Japanese weekly labels from translations.ts
+    expect(svg).toContain("週間ストリーク");
+    expect(svg).toContain("最長の週間ストリーク");
+  });
+});

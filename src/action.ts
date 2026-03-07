@@ -49,7 +49,7 @@ async function run() {
 
     // Fetch Data
     console.log("📡 Fetching GitHub data...");
-    const data = await fetchGitHubData(username, token);
+    const data = await fetchGitHubData(username, token, weekStreak);
     console.log(`   Total Contributions: ${data.totalContributions}`);
     const unit = weekStreak ? "weeks" : "days";
     console.log(`   Current Streak: ${data.currentStreak} ${unit}`);

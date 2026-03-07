@@ -38,8 +38,6 @@ export interface StreakCardData {
   longestStreakEndDate?: string;
   /** First contribution date */
   firstContributionDate: string;
-  /** Week streak (for week streak mode) */
-  weekStreak?: number;
   /** Longest week streak */
   longestWeekStreak?: number;
 }
@@ -338,8 +336,10 @@ function generateStreakContent(
   );
 
   // "Current Streak" label below ring
+  const streakLabel = weekStreak ? translations["Week Streak"] : translations["Current Streak"];
+
   lines.push(
-    renderText(translations["Current Streak"], centerX, centerLabelY, {
+    renderText(streakLabel, centerX, centerLabelY, {
       fill: colors.currStreakLabel,
       fontSize: 14,
       fontWeight: 400,
@@ -382,8 +382,10 @@ function generateStreakContent(
   );
 
   // Label below number
+  const longestLabel = weekStreak ? translations["Longest Week Streak"] : translations["Longest Streak"];
+
   lines.push(
-    renderText(translations["Longest Streak"], rightX, sideLabelY, {
+    renderText(longestLabel, rightX, sideLabelY, {
       fill: colors.sideLabels,
       fontSize: 14,
       fontWeight: 400,
